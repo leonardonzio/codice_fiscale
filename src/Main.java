@@ -1,19 +1,15 @@
 import java.time.LocalDate;
 
 public class Main {
-
     public static void main(String[] args) {
-        var data = LocalDate.of(2003, 3, 2);
+        var data = LocalDate.of(1996, 04, 05);
         CodiceFiscale cf = new CodiceFiscale(
-                "Prova",
-                "Uno",
+                "Marco",
+                "Alfonsi",
                 data,
-                "NonRoma",
+                "Milano",
                 'M'
         );
-
-        System.out.println(cf.calcolaCognome());
-        System.out.println(cf.calcolaNome());
-        System.out.println(cf.calcolaNascita());
+        System.out.println(cf.calcolaCf());
    }
 }

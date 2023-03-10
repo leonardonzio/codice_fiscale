@@ -1,12 +1,14 @@
+import com.sun.jdi.connect.LaunchingConnector;
+
 import java.io.CharArrayReader;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Date;
 
 public class CodiceFiscale {
     private String nome, cognome, città;
     private LocalDate nascita;
     private char sesso;
-    private String consonanti = "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ";
     private String vocali = "aeiouàèéìòù";
 
 
@@ -24,19 +26,15 @@ public class CodiceFiscale {
     public String getNome() {
         return nome;
     }
-
     public String getCognome() {
         return cognome;
     }
-
     public String getCittà() {
         return città;
     }
-
     public LocalDate getNascita() {
         return nascita;
     }
-
     public char getSesso() {
         return sesso;
     }
@@ -49,10 +47,11 @@ public class CodiceFiscale {
         StringBuilder voc = new StringBuilder();
 
         for (char ch : str.toCharArray()) {
-            if (consonanti.contains(Character.toString(ch)))
-                cons.append(ch);
-            else
+            String currLettera = Character.toString(ch).toLowerCase();
+            if (vocali.contains(currLettera))
                 voc.append(ch);
+            else
+                cons.append(ch);
         }
         String[] res = new String[]{cons.toString(), voc.toString()};
 
@@ -61,19 +60,19 @@ public class CodiceFiscale {
 
 
     // fa return delle tre lettere del CF dato un cognome
-    public String calcolaCognome() {
+    private String calcolaCognome() {
         String[] divisione = separa(getCognome());
         String consonanti = divisione[0];
         String vocali = divisione[1];
 
-        if (consonanti.length() > 2) {//abbastanza consonanti
+        if (consonanti.length() > 2) {// abbastanza consonanti
             return consonanti.substring(0, 3);
         }
 
         StringBuilder result = new StringBuilder();
         result.append(consonanti);
         int rimaste = 3 - consonanti.length();
-        for (char ch: vocali.toCharArray()) {//aggiungi vocali
+        for (char ch: vocali.toCharArray()) {// aggiungi vocali
             result.append(ch);
             rimaste--;
 
@@ -82,7 +81,7 @@ public class CodiceFiscale {
             }
         }
 
-        while (rimaste != 0) {//aggiungi x
+        while (rimaste != 0) {// aggiungi x
             result.append("X");
             rimaste--;
         }
@@ -92,7 +91,7 @@ public class CodiceFiscale {
 
 
     // fa return delle tre lettere del CF dato un nome
-    public String calcolaNome(){
+    private String calcolaNome(){
         String[] divisione = separa(getNome());
         String consonanti = divisione[0];
         String vocali = divisione[1];
@@ -107,7 +106,7 @@ public class CodiceFiscale {
         StringBuilder result = new StringBuilder();
         result.append(consonanti);
         int rimaste = 3 - consonanti.length();
-        for (char ch: vocali.toCharArray()) {//aggiungi vocali
+        for (char ch: vocali.toCharArray()) {// aggiungi vocali
             result.append(ch);
             rimaste--;
 
@@ -116,7 +115,7 @@ public class CodiceFiscale {
             }
         }
 
-        while (rimaste != 0) {//aggiungi x
+        while (rimaste != 0) {// aggiungi x
             result.append("X");
             rimaste--;
         }
@@ -125,7 +124,7 @@ public class CodiceFiscale {
     }
 
 
-    public String calcolaNascita(){
+    private String calcolaNascita(){
 
         StringBuilder res = new StringBuilder();
         char[] lettere = {'A', 'B', 'C', 'D', 'E', 'H', 'L', 'M', 'P', 'R', 'S', 'T'};
@@ -140,7 +139,6 @@ public class CodiceFiscale {
         res.append(annoStr);
 
         // -----converto il mese-----
-
         char letteraMese = lettere[mese - 1];
         String letteraMeseStr = Character.toString(letteraMese);
         res.append(letteraMeseStr);
@@ -149,16 +147,156 @@ public class CodiceFiscale {
         if (sesso == 'm'){
             if (giorno >= 1 && giorno <= 9){
                 res.append("0");
-                res.append(Integer.toString(giorno));
+                res.append(giorno);
             }
 
-            else res.append(Integer.toString(giorno));
+            else res.append(giorno);
             return res.toString();
         }
 
         // se è donna
-        res.append(Integer.toString(giorno+40));
+        res.append(giorno + 40);
         return res.toString();
     }
 
+
+    private String calcolaCittà(){
+
+        String città = getCittà().toLowerCase();
+
+        if      (città.equals("rimini"))    return "H294";
+        else if (città.equals("milano"))    return "F205";
+        else if (città.equals("bologna"))   return "A944";
+        else if (città.equals("siracusa"))  return "I754";
+
+        System.err.println("ERRORE");       return "-1";
+    }
+
+
+
+    // funzione che resittuisce l'indice di un dato carattere in un array, -1 se non lo trova
+    private static int findCharIndex(char[] arr, char c) throws Exception{
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] == c)
+                return i;
+
+        }
+        throw new Exception("errore");
+    }
+
+
+    // return ultima lettera
+    private String calcolaUltimaLettera(){
+
+        StringBuilder cfParziale = new StringBuilder();
+
+        char[] alfabetoInglese = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                                'I', 'J', 'K', 'L', 'M', 'N', 'O',
+                                'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+                                'W', 'X', 'Y', 'Z'};
+
+        String[] numeriSpeciali = {"1", "0", "5", "7", "9", "13", "15", "17", "19", "21",
+                                "2", "4", "18", "20", "11", "3", "6", "8", "12", "14",
+                                "16", "10", "22", "25", "24", "23"};
+
+        String cognomeStr = calcolaCognome();
+        String nomeStr = calcolaNome();
+        char[] nascita = calcolaNascita().toCharArray();
+        char[] città = calcolaCittà().toCharArray();
+
+
+        // sostituisco numeri con lettere dell'alfabeto inglese in nascita
+        for (int i = 0; i < nascita.length; i++) {
+            if(Character.isDigit(nascita[i])){
+                int curr = Integer.parseInt(Character.toString(nascita[i]));
+                char letteraDaMettere = alfabetoInglese[curr];
+                nascita[i] = letteraDaMettere;
+            }
+        }
+        String nascitaStr = new String(nascita);
+
+
+        // sostituisco numeri con lettere dell'alfabeto inglese in città
+        for (int i = 0; i < città.length; i++) {
+            if(Character.isDigit(città[i])){
+                int curr = Integer.parseInt(Character.toString(città[i]));
+                char letteraDaMettere = alfabetoInglese[curr];
+                città[i] = letteraDaMettere;
+            }
+        }
+        String cittàStr = new String(città);
+
+        // costruisco il cf parziale
+        cfParziale.append(cognomeStr);
+        cfParziale.append(nomeStr);
+        cfParziale.append(nascitaStr);
+        cfParziale.append(cittàStr);
+
+
+        // lo trasformo in un array di char in modo da poter scorrere ogni carattere
+        char[] cfParzialeArray = cfParziale.toString().toCharArray();
+
+
+        // faccio il calcolo vero e proprio dell'ultima lettera
+        int somma = 0;
+
+        // ciclo da 1 a cfParzialeArray.length
+        for (int i = 0; i < cfParzialeArray.length; i++) {
+
+            // posizione pari
+            if(i % 2 != 0){
+                char curr = cfParzialeArray[i];
+                try {
+                    int valoreLettera = findCharIndex(alfabetoInglese, curr);
+                    somma += valoreLettera;
+                }catch (Exception e){
+                    System.out.println(e.getMessage());
+                }
+            }
+
+            // posizione dispari
+            else{
+                char curr = cfParzialeArray[i];
+                try {
+                    int indice = findCharIndex(alfabetoInglese, curr);
+                    String valoreLettera = numeriSpeciali[indice];
+                    int valoreLetteraInt = Integer.parseInt(valoreLettera);
+                    somma += valoreLetteraInt;
+                }catch (Exception e){
+                    System.out.println(e.getMessage());
+                }
+
+
+            }
+
+        }
+
+        int finalIndex = somma % 26;
+        char finalLetter = alfabetoInglese[finalIndex];
+
+        return Character.toString(finalLetter);
+    }
+
+
+
+
+    // funzione che crea codice fiscale finale
+    public String calcolaCf(){
+
+        StringBuilder codFisc = new StringBuilder();
+
+        String cognomeCod = calcolaCognome();
+        String nomeCod = calcolaNome();
+        String nascitaCod = calcolaNascita();
+        String cittàCod = calcolaCittà();
+        String lastCode = calcolaUltimaLettera();
+
+        codFisc.append(cognomeCod);
+        codFisc.append(nomeCod);
+        codFisc.append(nascitaCod);
+        codFisc.append(cittàCod);
+        codFisc.append(lastCode);
+
+        return codFisc.toString();
+    }
 }

@@ -10,7 +10,14 @@ public class CodiceFiscale {
     private LocalDate nascita;
     private char sesso;
     private String vocali = "aeiouàèéìòù";
+    private static char[] alfabetoInglese = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+            'I', 'J', 'K', 'L', 'M', 'N', 'O',
+            'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+            'W', 'X', 'Y', 'Z'};
 
+    private static String[] numeriSpeciali = {"1", "0", "5", "7", "9", "13", "15", "17", "19", "21",
+            "2", "4", "18", "20", "11", "3", "6", "8", "12", "14",
+            "16", "10", "22", "25", "24", "23"};
 
     // costruttore codice fiscale
     public CodiceFiscale(String nome, String cognome, LocalDate nascita, String città, char sesso) {
@@ -169,7 +176,7 @@ public class CodiceFiscale {
         else if (città.equals("bologna"))   return "A944";
         else if (città.equals("siracusa"))  return "I754";
 
-        System.err.println("ERRORE");       return "-1";
+        System.err.println("--ERRORE-CITTA'--");       return "-1";
     }
 
 
@@ -189,15 +196,6 @@ public class CodiceFiscale {
     private String calcolaUltimaLettera(){
 
         StringBuilder cfParziale = new StringBuilder();
-
-        char[] alfabetoInglese = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
-                                'I', 'J', 'K', 'L', 'M', 'N', 'O',
-                                'P', 'Q', 'R', 'S', 'T', 'U', 'V',
-                                'W', 'X', 'Y', 'Z'};
-
-        String[] numeriSpeciali = {"1", "0", "5", "7", "9", "13", "15", "17", "19", "21",
-                                "2", "4", "18", "20", "11", "3", "6", "8", "12", "14",
-                                "16", "10", "22", "25", "24", "23"};
 
         String cognomeStr = calcolaCognome();
         String nomeStr = calcolaNome();
@@ -278,10 +276,8 @@ public class CodiceFiscale {
     }
 
 
-
-
     // funzione che crea codice fiscale finale
-    public String calcolaCf(){
+    public String calcolaCF(){
 
         StringBuilder codFisc = new StringBuilder();
 
@@ -299,4 +295,88 @@ public class CodiceFiscale {
 
         return codFisc.toString();
     }
+
+
+    private static String calcolaUltimaLetteraGenerico(char[] cf){
+
+        int somma = 0;
+
+        // converto tutto in lettere
+        for (int i = 0; i < cf.length; i++) {
+            if(Character.isDigit(cf[i])){
+                int curr = Integer.parseInt(Character.toString(cf[i]));
+                char letteraDaMettere = alfabetoInglese[curr];
+                cf[i] = letteraDaMettere;
+            }
+        }
+
+        for (int i = 0; i < cf.length; i++) {
+
+            // posizione pari
+            if(i % 2 != 0){
+                char curr = cf[i];
+                try {
+                    int valoreLettera = findCharIndex(alfabetoInglese, curr);
+                    somma += valoreLettera;
+                }catch (Exception e){
+                    System.out.println(e.getMessage());
+                }
+            }
+
+            // posizione dispari
+            else{
+                char curr = cf[i];
+                try {
+                    int indice = findCharIndex(alfabetoInglese, curr);
+                    String valoreLettera = numeriSpeciali[indice];
+                    int valoreLetteraInt = Integer.parseInt(valoreLettera);
+                    somma += valoreLetteraInt;
+                }catch (Exception e){
+                    System.out.println(e.getMessage());
+                }
+
+
+            }
+
+        }
+        int finalIndex = somma % 26;
+        char finalLetter = alfabetoInglese[finalIndex];
+
+        return Character.toString(finalLetter);
+
+    }
+
+
+    public String[] calcolaOmocodici(){
+
+        int indexOm = 0;
+        String[] cfOmocodici = new String[0];
+        char[] cambi = {'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V'};
+        String cfBase= calcolaCF();
+
+        for (int i = 14; i >= 6; i--) {
+
+            char[] cf = Arrays.copyOf(cfBase.toCharArray(), cfBase.toCharArray().length - 1);
+
+            if (Character.isDigit(cf[i])) {
+
+                int indice = Integer.parseInt(Character.toString(cf[i]));
+                cf[i] = cambi[indice];
+
+                String cfPartial = new String(cf);
+
+                String ultimaLettera = calcolaUltimaLetteraGenerico(cf);
+
+                String finalCf = cfPartial + ultimaLettera;
+
+
+                cfOmocodici = Arrays.copyOf(cfOmocodici, cfOmocodici.length + 1);
+                cfOmocodici[indexOm] = finalCf;
+                indexOm++;
+            }
+        }
+
+        return cfOmocodici;
+    }
+
 }

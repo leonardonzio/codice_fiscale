@@ -26,8 +26,8 @@ public class Main {
         System.out.println("codici fiscali omocodici: " + omocodici1 + "\n");
 
         System.out.println("Seconda persona:");
-        System.out.println("codice fiscale: " + cf1.calcolaCF());
-        String omocodici2 = Arrays.toString(cf1.calcolaOmocodici());
+        System.out.println("codice fiscale: " + cf2.calcolaCF());
+        String omocodici2 = Arrays.toString(cf2.calcolaOmocodici());
         System.out.println("codici fiscali omocodici: " + omocodici2 + "\n");
 
    }
